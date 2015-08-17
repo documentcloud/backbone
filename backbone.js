@@ -394,15 +394,18 @@
   var Model = Backbone.Model = function(attributes, options) {
     var attrs = attributes || {};
     options || (options = {});
-    this.cid = _.uniqueId(this.cidPrefix);
     this.attributes = {};
-    if (options.collection) this.collection = options.collection;
+    _.extend(this, _.pick(options, modelOptions));
+    this.cid = _.uniqueId(_.result(this, 'cidPrefix'));
     if (options.parse) attrs = this.parse(attrs, options) || {};
     attrs = _.defaults({}, attrs, _.result(this, 'defaults'));
     this.set(attrs, options);
     this.changed = {};
     this.initialize.apply(this, arguments);
   };
+
+  // List of model options to be set as properties
+  var modelOptions = ['cidPrefix', 'idAttribute', 'collection'];
 
   // Attach all inheritable methods to the Model prototype.
   _.extend(Model.prototype, Events, {
@@ -506,7 +509,7 @@
       }
 
       // Update the `id`.
-      this.id = this.get(this.idAttribute);
+      this.id = this.get(_.result(this, 'idAttribute'));
 
       // Trigger all relevant attribute changes.
       if (!silent) {
@@ -692,7 +695,7 @@
         _.result(this.collection, 'url') ||
         urlError();
       if (this.isNew()) return base;
-      var id = this.get(this.idAttribute);
+      var id = this.get(_.result(this, 'idAttribute'));
       return base.replace(/[^\/]$/, '$&/') + encodeURIComponent(id);
     },
 
@@ -704,12 +707,12 @@
 
     // Create a new model with identical attributes to this one.
     clone: function() {
-      return new this.constructor(this.attributes);
+      return new this.constructor(this.attributes, _.pick(this, modelOptions));
     },
 
     // A model is new if it has never been saved to the server, and lacks an id.
     isNew: function() {
-      return !this.has(this.idAttribute);
+      return !this.has(_.result(this, 'idAttribute'));
     },
 
     // Check if the model is currently in a valid state.
@@ -752,9 +755,7 @@
   // If a `comparator` is specified, the Collection will maintain
   // its models in sort order, as they're added and removed.
   var Collection = Backbone.Collection = function(models, options) {
-    options || (options = {});
-    if (options.model) this.model = options.model;
-    if (options.comparator !== void 0) this.comparator = options.comparator;
+    _.extend(this, _.pick(options, collectionOptions));
     this._reset();
     this.initialize.apply(this, arguments);
     if (models) this.reset(models, _.extend({silent: true}, options));
@@ -763,6 +764,9 @@
   // Default options for `Collection#set`.
   var setOptions = {add: true, remove: true, merge: true};
   var addOptions = {add: true, remove: false};
+
+  // List of collection options to be set as properties
+  var collectionOptions = ['model', 'comparator'];
 
   // Define the Collection's inheritable methods.
   _.extend(Collection.prototype, Events, {
@@ -1043,15 +1047,13 @@
 
     // Create a new collection with an identical list of models as this one.
     clone: function() {
-      return new this.constructor(this.models, {
-        model: this.model,
-        comparator: this.comparator
-      });
+      return new this.constructor(this.models, _.pick(this, collectionOptions));
     },
 
     // Define how to uniquely identify models in the collection.
     modelId: function (attrs) {
-      return attrs[this.model.prototype.idAttribute || 'id'];
+      var proto = this.model.prototype;
+      return attrs[_.result(proto, 'idAttribute') || 'id'];
     },
 
     // Private method to reset all internal state. Called when the collection
