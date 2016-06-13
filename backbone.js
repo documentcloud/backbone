@@ -1154,6 +1154,7 @@
         removed.push(model);
         this._removeReference(model, options);
       }
+      if (models.length > 0 && !options.silent) delete options.index;
       return removed;
     },
 
