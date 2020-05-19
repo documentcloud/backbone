@@ -759,7 +759,7 @@
     Backbone.history.checkUrl();
   });
 
-  QUnit.test('#2656 - No trailing slash on root.', function(assert) {
+  QUnit.test('#2656 - No trailing slash on root if root set without slash.', function(assert) {
     assert.expect(1);
     Backbone.history.stop();
     Backbone.history = _.extend(new Backbone.History, {
@@ -775,7 +775,7 @@
     Backbone.history.navigate('');
   });
 
-  QUnit.test('#2656 - No trailing slash on root.', function(assert) {
+  QUnit.test('#2656 - Trailing slash on root with default root (backwards compatibility check).', function(assert) {
     assert.expect(1);
     Backbone.history.stop();
     Backbone.history = _.extend(new Backbone.History, {
@@ -791,7 +791,23 @@
     Backbone.history.navigate('');
   });
 
-  QUnit.test('#2656 - No trailing slash on root.', function(assert) {
+  QUnit.test('#2656 - No trailing slash on root with empty root.', function(assert) {
+    assert.expect(1);
+    Backbone.history.stop();
+    Backbone.history = _.extend(new Backbone.History, {
+      location: location,
+      history: {
+        pushState: function(state, title, url) {
+          assert.strictEqual(url, '');
+        }
+      }
+    });
+    location.replace('http://example.com/path');
+    Backbone.history.start({pushState: true, hashChange: false, root: ''});
+    Backbone.history.navigate('');
+  });
+
+  QUnit.test('#2656 - No trailing slash on root with parameters if root set without slash.', function(assert) {
     assert.expect(1);
     Backbone.history.stop();
     Backbone.history = _.extend(new Backbone.History, {
@@ -804,6 +820,54 @@
     });
     location.replace('http://example.com/root/path');
     Backbone.history.start({pushState: true, hashChange: false, root: 'root'});
+    Backbone.history.navigate('?x=1');
+  });
+
+  QUnit.test('#3391 - Trailing slash on root if root set with slash.', function(assert) {
+    assert.expect(1);
+    Backbone.history.stop();
+    Backbone.history = _.extend(new Backbone.History, {
+      location: location,
+      history: {
+        pushState: function(state, title, url) {
+          assert.strictEqual(url, '/root/');
+        }
+      }
+    });
+    location.replace('http://example.com/root/path');
+    Backbone.history.start({pushState: true, hashChange: false, root: 'root/'});
+    Backbone.history.navigate('');
+  });
+
+  QUnit.test('#3391 - Trailing slash on root if degenerate root set with slash.', function(assert) {
+    assert.expect(1);
+    Backbone.history.stop();
+    Backbone.history = _.extend(new Backbone.History, {
+      location: location,
+      history: {
+        pushState: function(state, title, url) {
+          assert.strictEqual(url, '/');
+        }
+      }
+    });
+    location.replace('http://example.com/path');
+    Backbone.history.start({pushState: true, hashChange: false, root: '/'});
+    Backbone.history.navigate('');
+  });
+
+  QUnit.test('#3391 - Trailing slash on root with parameters if root set with slash.', function(assert) {
+    assert.expect(1);
+    Backbone.history.stop();
+    Backbone.history = _.extend(new Backbone.History, {
+      location: location,
+      history: {
+        pushState: function(state, title, url) {
+          assert.strictEqual(url, '/root/?x=1');
+        }
+      }
+    });
+    location.replace('http://example.com/root/path');
+    Backbone.history.start({pushState: true, hashChange: false, root: 'root/'});
     Backbone.history.navigate('?x=1');
   });
 
